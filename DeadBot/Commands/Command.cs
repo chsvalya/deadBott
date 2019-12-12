@@ -11,7 +11,7 @@ namespace DeadBot.Commands
 {
     /* не знаю на сколько понадобится,но таким образом,можно сохранить пересечение
      * команд в чатике */
-    public abstract class Command
+    abstract class Command
     {
         public abstract string Name { get; }
 
