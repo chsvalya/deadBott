@@ -46,12 +46,14 @@
     <Compile Include="Commands\Command.cs" />
     <Compile Include="Enums\Enums.cs" />
     <Compile Include="Keyboards\Keyboards.cs" />
+    <Compile Include="ManageMMSQL\Connecting.cs" />
     <Compile Include="Models\Bot.cs" />
     <Compile Include="Models\BotSettings.cs" />
     <Compile Include="Models\DeadLine.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Testcs.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

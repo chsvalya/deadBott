@@ -15,5 +15,6 @@ namespace DeadBot.Models
             ChatId = chatId;
             DeadLines = new List<DeadLine>();
         }
+        public void AddDeadLine(DeadLine deadLine) => DeadLines.Add(deadLine);
     }
 }

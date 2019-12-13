@@ -7,6 +7,7 @@ using Telegram.Bot.Args;
 using Telegram.Bot.Types.Enums;
 using static DeadBot.Keyboards.Keyboards;
 using DeadBot.Enums;
+using DeadBot.ManageMMSQL;
 
 namespace DeadBot
 {
@@ -14,10 +15,11 @@ namespace DeadBot
     {
         private static TelegramBotClient client;
         private const string token = "892374552:AAFcqMqxWkCsHZNQYj2G_mhgZ6ERDek4m6Q";
-        private static List<User> users = new List<User>();
+        private static Dictionary<long, List<DeadLine>> users = Connecting.Connect();
             
         static void Main(string[] args)
         {
+
             client = new TelegramBotClient(token);
             
             client.OnMessage += BotOnMessageReceived;
@@ -31,9 +33,9 @@ namespace DeadBot
         private async static void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
-            if (users.FirstOrDefault(u => u.ChatId == message.Chat.Id) is null)
-                users.Add(new User(message.Chat.Id));
-            var user = users.First(u => u.ChatId == message.Chat.Id);
+            if (!users.ContainsKey(message.Chat.Id))
+                users.Add(message.Chat.Id, new List<DeadLine>()); ;
+            var user = users.First(u => u.Key == message.Chat.Id);
             if (message?.Type == MessageType.Text)
                 if (message.Text == "/start")
                     await client.SendTextMessageAsync(message.Chat.Id, "What are we doing with deadlines?",
@@ -75,9 +77,9 @@ namespace DeadBot
                 if (message.Text == "Show all")
                 {
                     await client.SendTextMessageAsync(message.Chat.Id, "These are your deadlines");
-                    foreach(var deadline in user.DeadLines)
+                    //foreach(var deadline in user[message.Chat.Id].Value)
                     {
-                    await client.SendTextMessageAsync(message.Chat.Id, $"{deadline.Name} on {deadline.DateTime}");
+                   // await client.SendTextMessageAsync(message.Chat.Id, $"{deadline.Name} on {deadline.DateTime}");
                     }
                 }     
         }
