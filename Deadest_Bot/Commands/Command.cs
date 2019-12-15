@@ -9,6 +9,8 @@ using Telegram.Bot.Types;
 
 namespace DeadBot.Commands
 {
+    /* не знаю на сколько понадобится,но таким образом,можно сохранить пересечение
+     * команд в чатике */
     abstract class Command
     {
         public abstract string Name { get; }

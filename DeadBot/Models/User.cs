@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace DeadBot.Models
 {
-    class User
-    {
-        public long ChatId { get; set; }
-        public List<DeadLine> DeadLines { get; set; }
-        public User(long chatId)
-        {
-            ChatId = chatId;
-            DeadLines = new List<DeadLine>();
-        }
-        public void AddDeadLine(DeadLine deadLine) => DeadLines.Add(deadLine);
-    }
+	public class User
+	{
+		public int Id { get; set; }
+		public long TelegramId { get; set; }
+		public bool IsBot { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
+		public string Username { get; set; }
+		public virtual List<DeadLine> DeadLines { get; set; } = new List<DeadLine>();
+	}
 }
