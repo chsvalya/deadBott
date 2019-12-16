@@ -15,10 +15,6 @@ namespace DeadBot.Keyboards
                 new []
                 {
                     new KeyboardButton("Add"),
-                    new KeyboardButton("Edit")
-                },
-                new[]
-                {
                     new KeyboardButton("Delete"),
                     new KeyboardButton("Show all")
                 }
