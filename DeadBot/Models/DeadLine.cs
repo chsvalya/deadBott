@@ -12,14 +12,14 @@ namespace DeadBot.Models
 		public int Id { get; set; }
         public string Name { get; set; }
         public DateTime? DateTime { get; set; } /* soft deadline */
-        public int Priority { get; set; } /* from 1 to 3, can be used for default frequency */
         public string NotificationFrequency { get; set; } /* может ты знаешь как нормально использовать enum тут? */
         public string StartDate { get; set; }
         public long ChatId { get;set; }
 		public virtual User User { get; set; }
 
-        public DeadLine()
+        public DeadLine(long cid)
         {
+            ChatId = cid;
             Name = null;
             NotificationFrequency = null;
         }

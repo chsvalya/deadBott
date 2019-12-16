@@ -73,7 +73,7 @@ namespace DeadBot
                     if (messageEventArgs.Message.Text == "Add")
                     {
                     await client.SendTextMessageAsync(id, "Enter name of deadline").ConfigureAwait(false);
-                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine());
+                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine(messageEventArgs.Message.Chat.Id));
                     }
                     else
                     await client.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "What are we doing with deadlines?",
@@ -81,7 +81,7 @@ namespace DeadBot
             }
             else
                 {
-                    DeadLine unfinished = new DeadLine();
+                    DeadLine unfinished = new DeadLine(0);
                     UsersAndUnfinishedDeadlines.TryGetValue(id, out unfinished);
                     if (unfinished.Name == null) 
                     {
@@ -117,6 +117,11 @@ namespace DeadBot
                         unfinished.StartDate != null && unfinished.DateTime != null)
                     {
                         await client.SendTextMessageAsync(id, "Deadline is added");
+                    using (var context = new ApplicationContext())
+                    {
+                        context.DeadLines.Add(UsersAndUnfinishedDeadlines[id]);
+                        context.SaveChanges();
+                    }
                         UsersAndUnfinishedDeadlines.Remove(id);
                     }
                 }
