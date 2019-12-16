@@ -17,9 +17,8 @@ namespace DeadBot.Models
         public long ChatId { get;set; }
 		public virtual User User { get; set; }
 
-        public DeadLine(long cid)
+        public DeadLine()
         {
-            ChatId = cid;
             Name = null;
             NotificationFrequency = null;
         }

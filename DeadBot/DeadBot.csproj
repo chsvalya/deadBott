@@ -61,6 +61,14 @@
     <Compile Include="Migrations\201912161111421_AddNewUser.designer.cs">
       <DependentUpon>201912161111421_AddNewUser.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201912161409445_AddDeadlines.cs" />
+    <Compile Include="Migrations\201912161409445_AddDeadlines.designer.cs">
+      <DependentUpon>201912161409445_AddDeadlines.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201912162155007_Delete.cs" />
+    <Compile Include="Migrations\201912162155007_Delete.designer.cs">
+      <DependentUpon>201912162155007_Delete.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Bot.cs" />
     <Compile Include="Models\BotSettings.cs" />
@@ -92,6 +100,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201912161111421_AddNewUser.resx">
       <DependentUpon>201912161111421_AddNewUser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201912161409445_AddDeadlines.resx">
+      <DependentUpon>201912161409445_AddDeadlines.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201912162155007_Delete.resx">
+      <DependentUpon>201912162155007_Delete.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

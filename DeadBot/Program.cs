@@ -12,6 +12,7 @@ using System.Threading;
 using System.Net;
 using System.Threading.Tasks;
 using MihaZupan;
+using System.Data.Entity;
 
 namespace DeadBot
 {
@@ -20,13 +21,14 @@ namespace DeadBot
     {
         static ITelegramBotClient client;
         static Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = new Dictionary<long, DeadLine>();
+        static List<long> WhoWantedToDelete = new List<long>();
         static ApplicationContext context = new ApplicationContext();
         static void Main()
         {
             var proxy = new HttpToSocks5Proxy(
                 "46.101.123.77", 7890, "proxyuser", "2SASZwRfJbd24udA");
 
-            client = new TelegramBotClient("892374552:AAFcqMqxWkCsHZNQYj2G_mhgZ6ERDek4m6Q") { Timeout = TimeSpan.FromSeconds(5) };
+            client = new TelegramBotClient("892374552:AAFcqMqxWkCsHZNQYj2G_mhgZ6ERDek4m6Q", proxy) { Timeout = TimeSpan.FromSeconds(5) };
 
             var me = client.GetMeAsync().Result;
             Console.WriteLine($"id: {me.Id}, name: {me.FirstName}");
@@ -48,9 +50,10 @@ namespace DeadBot
             int userId = default;
             var id = messageEventArgs.Message.Chat.Id;
             var tgUser = messageEventArgs.Message.From;
-            var userDeadlines = context.DeadLines.Where(d => d.ChatId == id).ToList();
+            List<DeadLine> userDeadlines;
             using (context = new ApplicationContext())
             {
+                userDeadlines = context.DeadLines.Where(d => d.ChatId == id).ToList();
                 var dbuser = context.Users
                     .First(value => value.TelegramId == tgUser.Id);
 
@@ -70,19 +73,19 @@ namespace DeadBot
                 userId = dbuser.Id;
             }
 
-            if (UsersAndUnfinishedDeadlines.Keys.Count(x => x == id) == 0)
+            if (UsersAndUnfinishedDeadlines.Keys.Count(x => x == id) == 0 && !WhoWantedToDelete.Contains(id))
             {
                 if (text == "Add")
                 {
                     await client.SendTextMessageAsync(id, "Enter name of deadline").ConfigureAwait(false);
-                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine(messageEventArgs.Message.Chat.Id));
+                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine() {ChatId=id });
                 }
                 else if (text == "Show all")
                 {
                     var answer = "";
                     foreach (var deadline in userDeadlines)
                     {
-                        answer += $"{deadline.Name} at {deadline.DateTime} /n";
+                        answer += $"{deadline.Name} at {deadline.DateTime} \n";
                     }
                     await client.SendTextMessageAsync(id, $"These are all your deadlines {answer}.").ConfigureAwait(false);
                 }
@@ -91,21 +94,17 @@ namespace DeadBot
                 {
                     var answer = "";
                     var counter = 1;
-                    var userResponce = 0;
+
                     foreach (var deadline in userDeadlines)
                     {
-                        answer += $"{counter}: {deadline.Name} at {deadline.DateTime} /n";
+                        answer += $"{counter}: {deadline.Name} at {deadline.DateTime} \n";
                         counter++;
                     }
                     await client.SendTextMessageAsync(id, $"These are all your deadlines {answer}. " +
                                                         $"Choose what to delete").ConfigureAwait(false);
-                    if (userResponce == 0)
-                    {
-                        userResponce = int.Parse(text);
-                    }
-                    await client.SendTextMessageAsync(id, $"Deadline {userDeadlines[userResponce - 1].Name} deleted")
-                                                            .ConfigureAwait(false);
-                    userDeadlines.RemoveAt(userResponce - 1);
+                    WhoWantedToDelete.Add(id);
+
+                    
                 }
                 else
                     await client.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "What are we doing with deadlines?",
@@ -113,7 +112,28 @@ namespace DeadBot
             }
             else
             {
-                DeadLine unfinished = new DeadLine(0);
+                if (WhoWantedToDelete.Contains(id))
+                {
+                    var userResponce = 0;
+
+                    if (userResponce == 0)
+                    {
+                        userResponce = int.Parse(text);
+                    }
+                    DeadLine deleted = userDeadlines[userResponce - 1];
+                    await client.SendTextMessageAsync(id, $"Deadline \'{deleted.Name}\' deleted")
+                                                            .ConfigureAwait(false);
+
+                    using(var context = new ApplicationContext())
+                    {
+                        context.DeadLines.Attach(deleted);
+                        context.DeadLines.Remove(deleted);
+                        await context.SaveChangesAsync();
+                    }
+                    WhoWantedToDelete.Remove(id);
+                    return;
+                }
+                DeadLine unfinished = new DeadLine() { ChatId = id};
                 UsersAndUnfinishedDeadlines.TryGetValue(id, out unfinished);
                 if (unfinished.Name == null) 
                 {
