@@ -15,24 +15,24 @@ using MihaZupan;
 
 namespace DeadBot
 {
-    
+
     class Program
     {
         static ITelegramBotClient client;
-        static Dictionary<long, List<DeadLine>> UsersAndDeadlines = new Dictionary<long, List<DeadLine>>();
+        static Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = new Dictionary<long, DeadLine>();
         static void Main()
         {
             var proxy = new HttpToSocks5Proxy(
                 "46.101.123.77", 7890, "proxyuser", "2SASZwRfJbd24udA");
 
-            client = new TelegramBotClient("892374552:AAFcqMqxWkCsHZNQYj2G_mhgZ6ERDek4m6Q") { Timeout = TimeSpan.FromSeconds(10) };
+            client = new TelegramBotClient("892374552:AAFcqMqxWkCsHZNQYj2G_mhgZ6ERDek4m6Q", proxy); //{ Timeout = TimeSpan.FromSeconds(10) };
 
             var me = client.GetMeAsync().Result;
             Console.WriteLine($"id: {me.Id}, name: {me.FirstName}");
 
-			client.OnMessage += BotOnMessageReceived;
-			client.OnMessageEdited += BotOnMessageReceived;
-			client.StartReceiving();
+            client.OnMessage += BotOnMessageReceived;
+            client.OnMessageEdited += BotOnMessageReceived;
+            client.StartReceiving();
             Console.ReadKey();
             client.StopReceiving();
         }
@@ -44,66 +44,88 @@ namespace DeadBot
             var text = messageEventArgs?.Message?.Text;
             if (text == null)
                 return;
+            int userId = default;
             var id = messageEventArgs.Message.Chat.Id;
-            List<DeadLine> deadLines;
-            try
+            var tgUser = messageEventArgs.Message.From;
+            using (var context = new ApplicationContext())
             {
-                deadLines = UsersAndDeadlines.First(u => u.Key == id).Value;
-            }
-            catch
-            {
-                UsersAndDeadlines.Add(id, new List<DeadLine>());
-                deadLines = UsersAndDeadlines.First(u => u.Key == id).Value;
+                var dbuser = context.Users
+                    .First(value => value.TelegramId == tgUser.Id);
+
+                if (dbuser == default)
+                {
+                    dbuser = new User()
+                    {
+                        FirstName = tgUser.FirstName,
+                        IsBot = tgUser.IsBot,
+                        LastName = tgUser.LastName,
+                        Username = tgUser.Username,
+                        TelegramId = tgUser.Id
+                    };
+                    context.Users.Add(dbuser);
+                    await context.SaveChangesAsync();
+                }
+                userId = dbuser.Id;
             }
 
-            var unfinishedDeadlines = deadLines.Where(d => d.Name is null || d.NotificationFrequency is null
-                                                        || d.StartDate is null || d.DateTime is null).ToList();
-            if (unfinishedDeadlines.Count() == 0)
-            {
-                unfinishedDeadlines.Add(new DeadLine());
-            }
-            foreach (var deadline in unfinishedDeadlines)
-            {
-                if (deadline.Name is null)
+                if (UsersAndUnfinishedDeadlines.Keys.Count(x => x == id) == 0)
                 {
+                    if (messageEventArgs.Message.Text == "Add")
+                    {
                     await client.SendTextMessageAsync(id, "Enter name of deadline").ConfigureAwait(false);
-                    if (!String.IsNullOrEmpty(text))
-                        deadline.Name = text;
-                    Console.WriteLine($"added name: {text}");
-                }
-                if (deadline.NotificationFrequency is null)
+                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine());
+                    }
+                    else
+                    await client.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "What are we doing with deadlines?",
+                                                    ParseMode.Default, false, false, 0, mainKeyboard);
+            }
+            else
                 {
+                    DeadLine unfinished = new DeadLine();
+                    UsersAndUnfinishedDeadlines.TryGetValue(id, out unfinished);
+                    if (unfinished.Name == null) 
+                    {
+                        if (!string.IsNullOrEmpty(text))
+                            unfinished.Name = text;
+                        Console.WriteLine($"added name: {text}");
                     await client.SendTextMessageAsync(id, "Choose frequency of reminding",
-                                                     ParseMode.Default, false, false, 0, frequencyKeyboard).ConfigureAwait(false);
-                    deadline.NotificationFrequency = text;
-                    Console.WriteLine($"added freq: {text}");
-                }
-                if (deadline.DateTime is null)
-                {
+                                                         ParseMode.Default, false, false, 0, frequencyKeyboard).ConfigureAwait(false);
+                    }
+                    else if (unfinished.NotificationFrequency is null)
+                    {
+                        
+                        unfinished.NotificationFrequency = text;
+                        Console.WriteLine($"added freq: {text}");
                     await client.SendTextMessageAsync(id, "Enter deadline itself in the following format" +
-                                                                  "YYYY-MM-DD HH-MM-SS").ConfigureAwait(false);
-                    deadline.DateTime = DateTime.Parse(text);
-                    Console.WriteLine($"added dt: {text}");
-                }
-                if (deadline.StartDate is null)
-                {
+                                                                      "YYYY-MM-DD HH-MM-SS").ConfigureAwait(false);
+                    }
+                    else if (unfinished.DateTime is null)
+                    {
+                        
+                        unfinished.DateTime = DateTime.Parse(text);
+                        Console.WriteLine($"added dt: {text}");
                     await client.SendTextMessageAsync(id, "Choose when start to remind in the following format",
-                                                    ParseMode.Default, false, false, 0, startDateKeyboard).ConfigureAwait(false);
-                    deadline.StartDate = text;
-                    Console.WriteLine($"added start: {text}");
+                                                        ParseMode.Default, false, false, 0, startDateKeyboard).ConfigureAwait(false);
+                }
+                    else if (unfinished.StartDate is null)
+                    {
+                        
+                        unfinished.StartDate = text;
+                        Console.WriteLine($"added start: {text}");
+                    }
+                    if (unfinished.Name != null && unfinished.NotificationFrequency != null &&
+                        unfinished.StartDate != null && unfinished.DateTime != null)
+                    {
+                        await client.SendTextMessageAsync(id, "Deadline is added");
+                        UsersAndUnfinishedDeadlines.Remove(id);
+                    }
                 }
 
-            }
-            
-            Console.WriteLine($"received: {text}");
-            if (text == "/start")
-                await client.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "What are we doing with deadlines?",
-                                                ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
-            
-            
-            ////if (!users.ContainsKey(message.Chat.Id))
-            ////    users.Add(message.Chat.Id, new List<DeadLine>()); ;
-            ////var user = users.First(u => u.Key == message.Chat.Id);
+
+
+                ////if (!users.ContainsKey(message.Chat.Id))
+                ////    users.Add(message.Chat.Id, new List<DeadLine>()); ;
+                ////var user = users.First(u => u.Key == message.Chat.Id);
 
                 //int userId = default;
                 //if (messageEventArgs.Message?.Type == MessageType.Text)
@@ -188,6 +210,7 @@ namespace DeadBot
 
                 //    }
                 //}
+            
         }
     }
 }

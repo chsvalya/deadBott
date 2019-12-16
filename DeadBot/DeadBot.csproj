@@ -57,6 +57,10 @@
     <Compile Include="Migrations\201912151039260_ChangeTelegramIDTypeForUser.designer.cs">
       <DependentUpon>201912151039260_ChangeTelegramIDTypeForUser.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201912161111421_AddNewUser.cs" />
+    <Compile Include="Migrations\201912161111421_AddNewUser.designer.cs">
+      <DependentUpon>201912161111421_AddNewUser.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Bot.cs" />
     <Compile Include="Models\BotSettings.cs" />
@@ -85,6 +89,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201912151039260_ChangeTelegramIDTypeForUser.resx">
       <DependentUpon>201912151039260_ChangeTelegramIDTypeForUser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201912161111421_AddNewUser.resx">
+      <DependentUpon>201912161111421_AddNewUser.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
