@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\Command.cs" />
+    <Compile Include="Commands\Notificater.cs" />
     <Compile Include="Commands\Receiver.cs" />
     <Compile Include="Enums\Enums.cs" />
     <Compile Include="Keyboards\Keyboards.cs" />
@@ -68,6 +69,10 @@
     <Compile Include="Migrations\201912162155007_Delete.cs" />
     <Compile Include="Migrations\201912162155007_Delete.designer.cs">
       <DependentUpon>201912162155007_Delete.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201912180141365_Sending.cs" />
+    <Compile Include="Migrations\201912180141365_Sending.designer.cs">
+      <DependentUpon>201912180141365_Sending.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Bot.cs" />
@@ -106,6 +111,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201912162155007_Delete.resx">
       <DependentUpon>201912162155007_Delete.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201912180141365_Sending.resx">
+      <DependentUpon>201912180141365_Sending.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

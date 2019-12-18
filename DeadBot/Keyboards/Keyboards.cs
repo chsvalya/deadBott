@@ -20,7 +20,7 @@ namespace DeadBot.Keyboards
                 }
             }, oneTimeKeyboard: true);
 
-        public static ReplyKeyboardMarkup frequencyKeyboard = new ReplyKeyboardMarkup(
+        public static ReplyKeyboardMarkup startDateKeyboard = new ReplyKeyboardMarkup(
             new KeyboardButton[][]
             {
                 new []
@@ -35,18 +35,14 @@ namespace DeadBot.Keyboards
                 }
             }, oneTimeKeyboard: true);
 
-        public static ReplyKeyboardMarkup startDateKeyboard = new ReplyKeyboardMarkup(
+        public static ReplyKeyboardMarkup frequencyKeyboard = new ReplyKeyboardMarkup(
             new KeyboardButton[][]
             {
                 new []
                 {
                     new KeyboardButton("Once a day"),
-                    new KeyboardButton("Twice a day")
-                },
-                new[]
-                {
-                    new KeyboardButton("Every 5 hours"),
-                    new KeyboardButton("Default")
+                    new KeyboardButton("Twice a day"),
+                    new KeyboardButton("Every 5 hours")
                 }
             }, oneTimeKeyboard: true);
     }

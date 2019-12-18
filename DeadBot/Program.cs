@@ -13,6 +13,8 @@ using System.Net;
 using System.Threading.Tasks;
 using MihaZupan;
 using System.Data.Entity;
+using DeadBot.Commands;
+using System.IO;
 
 namespace DeadBot
 {
@@ -33,11 +35,21 @@ namespace DeadBot
             var me = client.GetMeAsync().Result;
             Console.WriteLine($"id: {me.Id}, name: {me.FirstName}");
 
+            //еще не работает из-за startdate
+            //var notificater = new Notificater(client);
+
             client.OnMessage += BotOnMessageReceived;
             client.OnMessageEdited += BotOnMessageReceived;
             client.StartReceiving();
             Console.ReadKey();
             client.StopReceiving();
+            /* я же правильно сделала?*/
+            //Task.Run(() => {
+            //    while (true)
+            //    {
+            //        notificater.Sending();
+            //    }
+            //        });
         }
 
 
@@ -118,20 +130,31 @@ namespace DeadBot
 
                     if (userResponce == 0)
                     {
-                        userResponce = int.Parse(text);
+                        if(!int.TryParse(text,out userResponce))
+                        {
+                            await client.SendTextMessageAsync(id, "This is not a number!");
+                            return;
+                        }
                     }
-                    DeadLine deleted = userDeadlines[userResponce - 1];
-                    await client.SendTextMessageAsync(id, $"Deadline \'{deleted.Name}\' deleted")
-                                                            .ConfigureAwait(false);
-
-                    using(var context = new ApplicationContext())
+                    try {
+                        DeadLine deleted = userDeadlines[userResponce - 1];
+                        await client.SendTextMessageAsync(id, $"Deadline \'{deleted.Name}\' deleted")
+                                                                .ConfigureAwait(false);
+                        using (var context = new ApplicationContext())
+                        {
+                            context.DeadLines.Attach(deleted);
+                            context.DeadLines.Remove(deleted);
+                            await context.SaveChangesAsync();
+                        }
+                        WhoWantedToDelete.Remove(id);
+                        return;
+                    }
+                    catch (ArgumentOutOfRangeException)
                     {
-                        context.DeadLines.Attach(deleted);
-                        context.DeadLines.Remove(deleted);
-                        await context.SaveChangesAsync();
+                        await client.SendTextMessageAsync(id, "You picked something wrong");
+                        return;
                     }
-                    WhoWantedToDelete.Remove(id);
-                    return;
+                    
                 }
                 DeadLine unfinished = new DeadLine() { ChatId = id};
                 UsersAndUnfinishedDeadlines.TryGetValue(id, out unfinished);
@@ -145,20 +168,38 @@ namespace DeadBot
                 }
                 else if (unfinished.NotificationFrequency is null)
                 {
-                    unfinished.NotificationFrequency = text;
-                    Console.WriteLine($"added freq: {text}");
-                    await client.SendTextMessageAsync(id, "Enter deadline itself in the following format" +
-                                                                      " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(text) && (text == "Twice a day" || text == "Once a day" || text == "Every 5 hours"))
+                    {
+                        unfinished.NotificationFrequency = text;
+                        Console.WriteLine($"added freq: {text}");
+                        await client.SendTextMessageAsync(id, "Enter deadline itself in the following format" +
+                                                                          " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
+                    }
+                    else
+                    { await client.SendTextMessageAsync(id, "Please choose notification frequency from keyboard!");
+                    }
                 }
                 else if (unfinished.DateTime is null)
                 {
-                    unfinished.DateTime = DateTime.Parse(text);
-                    Console.WriteLine($"added dt: {text}");
-                    await client.SendTextMessageAsync(id, "Choose when start to remind in the following format",
-                                                        ParseMode.Default, false, false, 0, startDateKeyboard).ConfigureAwait(false);
+                    DateTime Date;
+                    if (DateTime.TryParse(text, out Date) && Date > DateTime.Now)
+                    {
+                        unfinished.DateTime = Date;
+                        Console.WriteLine($"added dt: {text}");
+                        await client.SendTextMessageAsync(id, "Enter the deadline itself in the following format" +
+                                                                          " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await client.SendTextMessageAsync(id, "Please enter the date in the following format" +
+                                                                          " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
+                    }
+
                 }
                 else if (unfinished.StartDate is null)
                 {
+                    //unfinished.StartDate = DateTime.Parse(text);
+                    // if start date < datetime
                     unfinished.StartDate = text;
                     Console.WriteLine($"added start: {text}");
                 }
