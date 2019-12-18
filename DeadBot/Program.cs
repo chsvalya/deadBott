@@ -38,12 +38,6 @@ namespace DeadBot
             //еще не работает из-за startdate
             var notificater = new Notificater(client);
 
-            client.OnMessage += BotOnMessageReceived;
-            client.OnMessageEdited += BotOnMessageReceived;
-            client.StartReceiving();
-            Console.ReadKey();
-            client.StopReceiving();
-            /* я же правильно сделала?*/
             Task.Run(() =>
             {
                 while (true)
@@ -51,6 +45,14 @@ namespace DeadBot
                     notificater.Sending();
                 }
             });
+
+            client.OnMessage += BotOnMessageReceived;
+            client.OnMessageEdited += BotOnMessageReceived;
+            client.StartReceiving();
+            Console.ReadKey();
+            client.StopReceiving();
+            /* я же правильно сделала?*/
+            
         }
 
 
@@ -187,7 +189,7 @@ namespace DeadBot
                     {
                         unfinished.DateTime = Date;
                         Console.WriteLine($"added dt: {text}");
-                        await client.SendTextMessageAsync(id, "Enter the start of the deadline in the following format" +
+                        await client.SendTextMessageAsync(id, "Enter the start of the deadline the following format" +
                                                                           " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
                     }
                     else

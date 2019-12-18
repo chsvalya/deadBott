@@ -24,38 +24,38 @@ namespace DeadBot.Commands
         }
         public async void FillIn()
         {
+            senders = new List<Action>() { OnceSender, TwiceSender, Hours };
             using (var contxt = new ApplicationContext())
             {
-                once = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day" && x.StartDate >= DateTime.Now).ToListAsync();
-                twice = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day" && x.StartDate >= DateTime.Now).ToListAsync();
-                hours_5 = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours" && x.StartDate >= DateTime.Now).ToListAsync();
+                once = contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day").ToList();
+                twice = contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day").ToList();
+                hours_5 = contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours").ToList();
             }
-            senders = new List<Action>() { OnceSender, TwiceSender, Hours };
         }
         private async void OnceSender()
         {
             foreach (var u in once)
             {
-                await client.SendTextMessageAsync(u.User.TelegramId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
+                await client.SendTextMessageAsync(u.ChatId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
             }
         }
         private async void TwiceSender()
         {
             foreach (var u in twice)
             {
-                await client.SendTextMessageAsync(u.User.TelegramId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
+                await client.SendTextMessageAsync(u.ChatId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
             }
         }
         private async void Hours()
         {
             foreach (var u in hours_5)
             {
-                await client.SendTextMessageAsync(u.User.TelegramId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
+                await client.SendTextMessageAsync(u.ChatId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
             }
         }
         public /*async*/ void Sending()
         {
-            if (DateTime.Now.Hour == 12)
+            if (true)
             {
                 for (int i = 0; i <= senders.Count; i++)
                     senders[i].Invoke();
