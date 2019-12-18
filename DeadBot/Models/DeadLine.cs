@@ -15,7 +15,7 @@ namespace DeadBot.Models
         public string NotificationFrequency { get; set; } /* может ты знаешь как нормально использовать enum тут? */
         /*крч у меня не получилось старт поменять на строку,из-за обращения к бд,дропнуть таблицы тоже не получается,поэтому пока храним так, а завтра я спрошу
          * у кого-нибудь или ты */
-        public string StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
         public long ChatId { get;set; }
 		public virtual User User { get; set; }
 

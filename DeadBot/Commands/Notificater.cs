@@ -26,9 +26,9 @@ namespace DeadBot.Commands
         {
             using (var contxt = new ApplicationContext())
             {
-                once = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day" && DateTime.Parse(x.StartDate) >= DateTime.Now).ToListAsync();
-                twice = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day" && DateTime.Parse(x.StartDate) >= DateTime.Now).ToListAsync();
-                hours_5 = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours" && DateTime.Parse(x.StartDate) >= DateTime.Now).ToListAsync();
+                once = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day" && x.StartDate >= DateTime.Now).ToListAsync();
+                twice = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day" && x.StartDate >= DateTime.Now).ToListAsync();
+                hours_5 = await contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours" && x.StartDate >= DateTime.Now).ToListAsync();
             }
             senders = new List<Action>() { OnceSender, TwiceSender, Hours };
         }

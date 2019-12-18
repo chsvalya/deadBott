@@ -74,6 +74,14 @@
     <Compile Include="Migrations\201912180141365_Sending.designer.cs">
       <DependentUpon>201912180141365_Sending.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201912181113517_deledata.cs" />
+    <Compile Include="Migrations\201912181113517_deledata.designer.cs">
+      <DependentUpon>201912181113517_deledata.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201912181117561_Notificate.cs" />
+    <Compile Include="Migrations\201912181117561_Notificate.designer.cs">
+      <DependentUpon>201912181117561_Notificate.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Bot.cs" />
     <Compile Include="Models\BotSettings.cs" />
@@ -114,6 +122,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201912180141365_Sending.resx">
       <DependentUpon>201912180141365_Sending.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201912181113517_deledata.resx">
+      <DependentUpon>201912181113517_deledata.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201912181117561_Notificate.resx">
+      <DependentUpon>201912181117561_Notificate.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

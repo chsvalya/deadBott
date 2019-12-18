@@ -36,7 +36,7 @@ namespace DeadBot
             Console.WriteLine($"id: {me.Id}, name: {me.FirstName}");
 
             //еще не работает из-за startdate
-            //var notificater = new Notificater(client);
+            var notificater = new Notificater(client);
 
             client.OnMessage += BotOnMessageReceived;
             client.OnMessageEdited += BotOnMessageReceived;
@@ -44,12 +44,13 @@ namespace DeadBot
             Console.ReadKey();
             client.StopReceiving();
             /* я же правильно сделала?*/
-            //Task.Run(() => {
-            //    while (true)
-            //    {
-            //        notificater.Sending();
-            //    }
-            //        });
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    notificater.Sending();
+                }
+            });
         }
 
 
@@ -67,7 +68,7 @@ namespace DeadBot
             {
                 userDeadlines = context.DeadLines.Where(d => d.ChatId == id).ToList();
                 var dbuser = context.Users
-                    .First(value => value.TelegramId == tgUser.Id);
+                    .FirstOrDefault(value => value.TelegramId == tgUser.Id);
 
                 if (dbuser == default)
                 {
@@ -102,7 +103,7 @@ namespace DeadBot
                     await client.SendTextMessageAsync(id, $"These are all your deadlines {answer}.").ConfigureAwait(false);
                 }
 
-                else if(text == "Delete")
+                else if(text == "Delete" && userDeadlines.Count() != 0)
                 {
                     var answer = "";
                     var counter = 1;
@@ -186,7 +187,7 @@ namespace DeadBot
                     {
                         unfinished.DateTime = Date;
                         Console.WriteLine($"added dt: {text}");
-                        await client.SendTextMessageAsync(id, "Enter the deadline itself in the following format" +
+                        await client.SendTextMessageAsync(id, "Enter the start of the deadline in the following format" +
                                                                           " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
                     }
                     else
@@ -198,10 +199,15 @@ namespace DeadBot
                 }
                 else if (unfinished.StartDate is null)
                 {
-                    //unfinished.StartDate = DateTime.Parse(text);
-                    // if start date < datetime
-                    unfinished.StartDate = text;
-                    Console.WriteLine($"added start: {text}");
+                    DateTime date;
+                    if (DateTime.TryParse(text, out date))
+                    {
+                        unfinished.StartDate = date;
+                        Console.WriteLine($"added start: {text}");
+                    }
+                    else
+                        await client.SendTextMessageAsync(id, "Please enter the date in the following format" +
+                                                                          " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
                 }
                 if (unfinished.Name != null && unfinished.NotificationFrequency != null &&
                         unfinished.StartDate != null && unfinished.DateTime != null)
