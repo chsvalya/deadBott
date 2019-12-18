@@ -20,21 +20,6 @@ namespace DeadBot.Keyboards
                 }
             }, oneTimeKeyboard: true);
 
-        public static ReplyKeyboardMarkup startDateKeyboard = new ReplyKeyboardMarkup(
-            new KeyboardButton[][]
-            {
-                new []
-                {
-                    new KeyboardButton("Two weeks"),
-                    new KeyboardButton("One week")
-                },
-                new[]
-                {
-                    new KeyboardButton("Five days"),
-                    new KeyboardButton("Default")
-                }
-            }, oneTimeKeyboard: true);
-
         public static ReplyKeyboardMarkup frequencyKeyboard = new ReplyKeyboardMarkup(
             new KeyboardButton[][]
             {

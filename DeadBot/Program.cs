@@ -22,8 +22,8 @@ namespace DeadBot
     class Program
     {
         static ITelegramBotClient client;
-        static Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = new Dictionary<long, DeadLine>();
-        static List<long> WhoWantedToDelete = new List<long>();
+        static readonly Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = new Dictionary<long, DeadLine>();
+        static readonly List<long> WhoWantedToDelete = new List<long>();
         static ApplicationContext context = new ApplicationContext();
         static void Main()
         {
@@ -35,7 +35,7 @@ namespace DeadBot
             var me = client.GetMeAsync().Result;
             Console.WriteLine($"id: {me.Id}, name: {me.FirstName}");
 
-            //еще не работает из-за startdate
+            
             var notificater = new Notificater(client);
 
             Task.Run(() =>
@@ -51,20 +51,32 @@ namespace DeadBot
             client.StartReceiving();
             Console.ReadKey();
             client.StopReceiving();
-            /* я же правильно сделала?*/
-            
+        }
+
+        static string WriteDeadlines(IEnumerable<DeadLine> deadlines)
+        {
+            var answer = "";
+            var counter = 1;
+            foreach (var deadline in deadlines)
+            {
+                answer += $"{counter}: {deadline.Name} on {deadline.DateTime}\n";
+            }
+            return answer;
         }
 
 
-        /* вообще, все что не в main надо перенести в другой класс */
         static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
-            var text = messageEventArgs?.Message?.Text;
+            var message = messageEventArgs?.Message;
+            var text = message?.Text;
+
             if (text == null)
                 return;
+
             int userId = default;
-            var id = messageEventArgs.Message.Chat.Id;
-            var tgUser = messageEventArgs.Message.From;
+            var id = message.Chat.Id;
+            var tgUser = message.From;
+
             List<DeadLine> userDeadlines;
             using (context = new ApplicationContext())
             {
@@ -74,7 +86,7 @@ namespace DeadBot
 
                 if (dbuser == default)
                 {
-                    dbuser = new User()
+                    dbuser = new User
                     {
                         FirstName = tgUser.FirstName,
                         IsBot = tgUser.IsBot,
@@ -82,9 +94,11 @@ namespace DeadBot
                         Username = tgUser.Username,
                         TelegramId = tgUser.Id
                     };
+
                     context.Users.Add(dbuser);
                     await context.SaveChangesAsync();
                 }
+
                 userId = dbuser.Id;
             }
 
@@ -92,39 +106,28 @@ namespace DeadBot
             {
                 if (text == "Add")
                 {
-                    await client.SendTextMessageAsync(id, "Enter name of deadline").ConfigureAwait(false);
-                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine() {ChatId=id });
+                    await client.SendTextMessageAsync(id, "Enter name of deadline.").ConfigureAwait(false);
+                    UsersAndUnfinishedDeadlines.Add(id, new DeadLine {ChatId=id });
                 }
+
                 else if (text == "Show all")
                 {
-                    var answer = "";
-                    foreach (var deadline in userDeadlines)
-                    {
-                        answer += $"{deadline.Name} at {deadline.DateTime} \n";
-                    }
-                    await client.SendTextMessageAsync(id, $"These are all your deadlines {answer}.").ConfigureAwait(false);
+                    await client.SendTextMessageAsync(id, $"These are all your deadlines:\n{WriteDeadlines(userDeadlines)}" +
+                        $"What's next?", ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
                 }
 
                 else if(text == "Delete" && userDeadlines.Count() != 0)
                 {
-                    var answer = "";
-                    var counter = 1;
-
-                    foreach (var deadline in userDeadlines)
-                    {
-                        answer += $"{counter}: {deadline.Name} at {deadline.DateTime} \n";
-                        counter++;
-                    }
-                    await client.SendTextMessageAsync(id, $"These are all your deadlines {answer}. " +
-                                                        $"Choose what to delete").ConfigureAwait(false);
+                    await client.SendTextMessageAsync(id, $"These are all your deadlines:\n" +
+                        $"{WriteDeadlines(userDeadlines)} Choose deadline number to delete").ConfigureAwait(false);
                     WhoWantedToDelete.Add(id);
-
-                    
                 }
+
                 else
-                    await client.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "What are we doing with deadlines?",
-                                      ParseMode.Default, false, false, 0, mainKeyboard);
+                    await client.SendTextMessageAsync(id, "What are we doing with deadlines?",
+                                      ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
             }
+
             else
             {
                 if (WhoWantedToDelete.Contains(id))
@@ -135,31 +138,32 @@ namespace DeadBot
                     {
                         if(!int.TryParse(text,out userResponce))
                         {
-                            await client.SendTextMessageAsync(id, "This is not a number!");
+                            await client.SendTextMessageAsync(id, "This is not a number!").ConfigureAwait(false);
                             return;
                         }
                     }
                     try {
                         DeadLine deleted = userDeadlines[userResponce - 1];
-                        await client.SendTextMessageAsync(id, $"Deadline \'{deleted.Name}\' deleted")
-                                                                .ConfigureAwait(false);
+                        await client.SendTextMessageAsync(id, $"Deadline \'{deleted.Name}\' deleted!\nWhat's next?",
+                                ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
                         using (var context = new ApplicationContext())
                         {
                             context.DeadLines.Attach(deleted);
                             context.DeadLines.Remove(deleted);
                             await context.SaveChangesAsync();
                         }
+
                         WhoWantedToDelete.Remove(id);
                         return;
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        await client.SendTextMessageAsync(id, "You picked something wrong");
+                        await client.SendTextMessageAsync(id, "You picked something wrong!").ConfigureAwait(false);
                         return;
                     }
-                    
                 }
-                DeadLine unfinished = new DeadLine() { ChatId = id};
+
+                DeadLine unfinished = new DeadLine { ChatId = id};
                 UsersAndUnfinishedDeadlines.TryGetValue(id, out unfinished);
                 if (unfinished.Name == null) 
                 {
@@ -169,27 +173,27 @@ namespace DeadBot
                     await client.SendTextMessageAsync(id, "Choose frequency of reminding",
                                                          ParseMode.Default, false, false, 0, frequencyKeyboard).ConfigureAwait(false);
                 }
+
                 else if (unfinished.NotificationFrequency is null)
                 {
                     if (!string.IsNullOrEmpty(text) && (text == "Twice a day" || text == "Once a day" || text == "Every 5 hours"))
                     {
                         unfinished.NotificationFrequency = text;
                         Console.WriteLine($"added freq: {text}");
-                        await client.SendTextMessageAsync(id, "Enter deadline itself in the following format" +
+                        await client.SendTextMessageAsync(id, "When is the deadline? In the following format" +
                                                                           " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
                     }
                     else
-                    { await client.SendTextMessageAsync(id, "Please choose notification frequency from keyboard!");
-                    }
+                        await client.SendTextMessageAsync(id, "Please choose notification frequency from keyboard!");
                 }
+
                 else if (unfinished.DateTime is null)
                 {
-                    DateTime Date;
-                    if (DateTime.TryParse(text, out Date) && Date > DateTime.Now)
+                    if (DateTime.TryParse(text, out DateTime Date) && Date > DateTime.Now)
                     {
                         unfinished.DateTime = Date;
                         Console.WriteLine($"added dt: {text}");
-                        await client.SendTextMessageAsync(id, "Enter the start of the deadline the following format" +
+                        await client.SendTextMessageAsync(id, "Wnen should I start to remind? In the following format" +
                                                                           " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
                     }
                     else
@@ -214,7 +218,9 @@ namespace DeadBot
                 if (unfinished.Name != null && unfinished.NotificationFrequency != null &&
                         unfinished.StartDate != null && unfinished.DateTime != null)
                 {
-                    await client.SendTextMessageAsync(id, "Deadline is added");
+                    await client.SendTextMessageAsync(id, "Deadline is added, thanks and good luck!\nWhat's next?", 
+                        ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
+
                     using (context = new ApplicationContext())
                     {
                         context.DeadLines.Add(UsersAndUnfinishedDeadlines[id]);

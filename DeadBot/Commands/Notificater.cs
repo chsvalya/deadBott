@@ -12,7 +12,7 @@ namespace DeadBot.Commands
     class Notificater
     {
         static ITelegramBotClient client;
-        static List<Action> senders = new List<Action>();
+        static List<Action> senders;
         static List<DeadLine> once;
         static List<DeadLine> twice;
         static List<DeadLine> hours_5;
@@ -22,45 +22,48 @@ namespace DeadBot.Commands
             client = c;
             FillIn();
         }
-        public async void FillIn()
+
+        public void FillIn()
         {
-            senders = new List<Action>() { OnceSender, TwiceSender, Hours };
             using (var contxt = new ApplicationContext())
             {
                 once = contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day").ToList();
                 twice = contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day").ToList();
                 hours_5 = contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours").ToList();
             }
-        }
-        private async void OnceSender()
-        {
-            foreach (var u in once)
+
+            senders = new List<Action>
             {
-                await client.SendTextMessageAsync(u.ChatId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
+                OnceSender,
+                TwiceSender,
+                Hours
+            };
+        }
+
+        private void RemindReceivers(IEnumerable<DeadLine> collection)
+        {
+            foreach (var deadline in collection)
+            {
+                client.SendTextMessageAsync(deadline.ChatId, $"Hey, you will be DEAD in a " +
+                                        $"{(deadline.DateTime - DateTime.Now).ToString()}, so do this task:" +
+                                        $"{deadline.Name}, dear");
             }
         }
-        private async void TwiceSender()
+        private void OnceSender()
         {
-            foreach (var u in twice)
-            {
-                await client.SendTextMessageAsync(u.ChatId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
-            }
+            RemindReceivers(once);
         }
-        private async void Hours()
+        private void TwiceSender()
         {
-            foreach (var u in hours_5)
-            {
-                await client.SendTextMessageAsync(u.ChatId, $"Hey, you will be DEAD in a {(u.DateTime - DateTime.Now).ToString()}, so do this task dear");
-            }
+            RemindReceivers(twice);
         }
-        public /*async*/ void Sending()
+        private void Hours()
         {
-            if (true)
-            {
-                for (int i = 0; i <= senders.Count; i++)
-                    senders[i].Invoke();
-            }
-            else if (DateTime.Now.Hour == 17)
+            RemindReceivers(hours_5);
+        }
+        public void Sending()
+        {
+            if (DateTime.Now.Hour == 17)
             {
                 for (int i = 1; i <= senders.Count; i++)
                     senders[i].Invoke();
@@ -68,6 +71,11 @@ namespace DeadBot.Commands
             else if (DateTime.Now.Hour == 22)
             {
                 for (int i = 2; i <= senders.Count; i++)
+                    senders[i].Invoke();
+            }
+            else
+            {
+                for (int i = 0; i <= senders.Count; i++)
                     senders[i].Invoke();
             }
         }
