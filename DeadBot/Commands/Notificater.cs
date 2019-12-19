@@ -51,6 +51,8 @@ namespace DeadBot.Commands
                                         $"{(deadline.DateTime - DateTime.Now).Value.Days} days and {(deadline.DateTime - DateTime.Now).Value.Hours} hours, so do this task: " +
                                         $"{deadline.Name}, dear");
             }
+            foreach (var deadline in collection)
+                AnswerManager.ShowPicture(client, deadline.ChatId);
         }
         private void OnceSender()
         {
