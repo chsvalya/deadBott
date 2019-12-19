@@ -28,6 +28,7 @@ namespace DeadBot.UsefulMethods
             foreach (var deadline in deadlines)
             {
                 answer += $"{counter}: {deadline.Name} on {deadline.DateTime}\n";
+                counter++;
             }
             return answer;
         }
@@ -35,8 +36,11 @@ namespace DeadBot.UsefulMethods
         public static async void AddReact(ITelegramBotClient client, 
                                           Dictionary<long, DeadLine> unfinishedDeadlines, long chatId)
         {
+            if (!unfinishedDeadlines.ContainsKey(chatId))
+            {
+                unfinishedDeadlines.Add(chatId, new DeadLine { ChatId = chatId });
+            }
             await client.SendTextMessageAsync(chatId, "Enter name of deadline.").ConfigureAwait(false);
-            unfinishedDeadlines.Add(chatId, new DeadLine { ChatId = chatId });
         }
 
         public static async void ShowAllReact(ITelegramBotClient client, List<DeadLine> deadlines, long chatId)
@@ -48,9 +52,12 @@ namespace DeadBot.UsefulMethods
         public static async void DeleteReact(ITelegramBotClient client, List<long> wantedDelete, 
                                              List<DeadLine> deadlines, long chatId)
         {
+            if (!wantedDelete.Contains(chatId))
+            {
+                wantedDelete.Add(chatId);
+            }
             await client.SendTextMessageAsync(chatId, $"These are all your deadlines:\n" +
                         $"{WriteDeadlines(deadlines)} Choose deadline number to delete").ConfigureAwait(false);
-            wantedDelete.Add(chatId);
         }
 
         public static async void ClassicGreetings(ITelegramBotClient client, long chatId)
@@ -78,6 +85,7 @@ namespace DeadBot.UsefulMethods
         public static async void DeleteDeadline(ITelegramBotClient client, long chatId, 
                                                 DeadLine deleted, List<long> wantedDelete)
         {
+            
             await client.SendTextMessageAsync(chatId, $"Deadline \'{deleted.Name}\' deleted!\nWhat's next?",
                                 ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
             wantedDelete.Remove(chatId);

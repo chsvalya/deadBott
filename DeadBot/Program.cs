@@ -9,6 +9,8 @@ using static DeadBot.UsefulMethods.ContextManager;
 using System.Threading.Tasks;
 using MihaZupan;
 using DeadBot.Commands;
+using DeadBot.ManageMMSQL;
+using System.Data.Entity;
 
 namespace DeadBot
 {
@@ -57,7 +59,11 @@ namespace DeadBot
             var tgUser = message.From;
 
             List<DeadLine> userDeadlines = new List<DeadLine>();
-            GetUser(userDeadlines, chatId, tgUser, userId);
+            using (var context = new ApplicationContext())
+            {
+                userDeadlines = context.DeadLines.Where(x => x.ChatId == chatId).ToList();
+            }
+                GetUser(userDeadlines, chatId, tgUser, userId);
 
             if (IsOldUserWithAllDeadlinesFinished(UsersAndUnfinishedDeadlines, WhoWantedToDelete, chatId))
             {

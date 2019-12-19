@@ -45,7 +45,7 @@ namespace DeadBot.Commands
             foreach (var deadline in collection)
             {
                 client.SendTextMessageAsync(deadline.ChatId, $"Hey, you will be DEAD in a " +
-                                        $"{(deadline.DateTime - DateTime.Now).ToString()}, so do this task:" +
+                                        $"{(deadline.DateTime - DateTime.Now).Value.Days} days and {(deadline.DateTime - DateTime.Now).Value.Hours} hours, so do this task: " +
                                         $"{deadline.Name}, dear");
             }
         }
@@ -63,19 +63,19 @@ namespace DeadBot.Commands
         }
         public void Sending()
         {
-            if (DateTime.Now.Hour == 17)
+            if (DateTime.Now.Hour == 17 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
             {
-                for (int i = 1; i <= senders.Count; i++)
+                for (int i = 1; i < senders.Count; i++)
                     senders[i].Invoke();
             }
-            else if (DateTime.Now.Hour == 22)
+            else if (DateTime.Now.Hour == 22 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
             {
-                for (int i = 2; i <= senders.Count; i++)
+                for (int i = 2; i < senders.Count; i++)
                     senders[i].Invoke();
             }
-            else
+            else if(DateTime.Now.Hour == 15 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 21 && DateTime.Now.Millisecond == 0)
             {
-                for (int i = 0; i <= senders.Count; i++)
+                for (int i = 0; i < senders.Count; i++)
                     senders[i].Invoke();
             }
         }
