@@ -1,5 +1,6 @@
 ﻿using DeadBot.ManageMMSQL;
 using DeadBot.Models;
+using DeadBot.UsefulMethods;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -11,6 +12,7 @@ namespace DeadBot.Commands
 {
     class Notificater
     {
+        int counter = 0;
         static ITelegramBotClient client;
         static List<Action> senders;
         static List<DeadLine> once;
@@ -44,6 +46,7 @@ namespace DeadBot.Commands
         {
             foreach (var deadline in collection)
             {
+
                 client.SendTextMessageAsync(deadline.ChatId, $"Hey, you will be DEAD in a " +
                                         $"{(deadline.DateTime - DateTime.Now).Value.Days} days and {(deadline.DateTime - DateTime.Now).Value.Hours} hours, so do this task: " +
                                         $"{deadline.Name}, dear");
@@ -65,18 +68,33 @@ namespace DeadBot.Commands
         {
             if (DateTime.Now.Hour == 17 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
             {
-                for (int i = 1; i < senders.Count; i++)
-                    senders[i].Invoke();
+                if (counter == 0)
+                {
+                    for (int i = 1; i < senders.Count; i++)
+                        senders[i].Invoke();
+                }
+                else
+                    counter = 0;
             }
             else if (DateTime.Now.Hour == 22 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
             {
-                for (int i = 2; i < senders.Count; i++)
-                    senders[i].Invoke();
+                if (counter == 0)
+                {
+                    for (int i = 2; i < senders.Count; i++)
+                        senders[i].Invoke();
+                }
+                else
+                    counter = 0;
             }
-            else if(DateTime.Now.Hour == 15 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 21 && DateTime.Now.Millisecond == 0)
+            else if(DateTime.Now.Hour == 12 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
             {
-                for (int i = 0; i < senders.Count; i++)
-                    senders[i].Invoke();
+                if (counter == 0)
+                {
+                    for (int i = 0; i < senders.Count; i++)
+                        senders[i].Invoke();
+                }
+                else
+                    counter = 0;
             }
         }
     }
