@@ -26,9 +26,9 @@ namespace DeadBot.Notifications
         {
             using (var contxt = new ApplicationContext())
             {
-                once = contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day").ToList();
-                twice = contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day").ToList();
-                hours_5 = contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours").ToList();
+                once = contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day" && x.StartDate <= DateTime.Now).ToList();
+                twice = contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day" && x.StartDate <= DateTime.Now).ToList();
+                hours_5 = contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours" && x.StartDate <= DateTime.Now).ToList();
             }
 
             senders = new List<Action>
@@ -75,7 +75,7 @@ namespace DeadBot.Notifications
                 else
                     counter = 0;
             }
-            else if (DateTime.Now.Hour == 22 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
+            else if (DateTime.Now.Hour == 21 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 20 && DateTime.Now.Millisecond == 0)
             {
                 if (counter == 0)
                 {
