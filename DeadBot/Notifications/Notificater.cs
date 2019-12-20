@@ -11,14 +11,20 @@ namespace DeadBot.Notifications
     class Notificater
     {
         int counter = 0;
-        static ITelegramBotClient client = Factory.Instance.GetClient;
+        static readonly ITelegramBotClient client = Factory.Instance.GetClient;
         static List<Action> senders;
         static List<DeadLine> once;
         static List<DeadLine> twice;
         static List<DeadLine> hours_5;
+        readonly Func<DeadLine, bool> findOnce;
+        readonly Func<DeadLine, bool> findTwice;
+        readonly Func<DeadLine, bool> findHours5;
 
         public Notificater()
         {
+            findOnce = FindOnceDeadlines;
+            findTwice = FindTwiceDeadlines;
+            findHours5 = FindHours5Deadlines;
             FillIn();
         }
 
@@ -26,9 +32,9 @@ namespace DeadBot.Notifications
         {
             using (var contxt = new ApplicationContext())
             {
-                once = contxt.DeadLines.Where(d =>  FindDeadlines(d, "Once a day")).ToList();
-                twice = contxt.DeadLines.Where(d => FindDeadlines(d, "Twice a day")).ToList();
-                hours_5 = contxt.DeadLines.Where(d => FindDeadlines(d, "Every 5 hours")).ToList();
+                once = contxt.DeadLines.Where(findOnce).ToList();
+                twice = contxt.DeadLines.Where(findTwice).ToList();
+                hours_5 = contxt.DeadLines.Where(findHours5).ToList();
             }
 
             senders = new List<Action>
@@ -39,9 +45,16 @@ namespace DeadBot.Notifications
             };
         }
 
-        private bool FindDeadlines(DeadLine deadLine, string frequency) =>
-            (deadLine.NotificationFrequency == frequency && deadLine.StartDate <= DateTime.Now
-                                                         && deadLine.DateTime >= DateTime.Now);
+        private bool CheckDate(DeadLine deadLine) => deadLine.StartDate <= DateTime.Now
+                                                  && deadLine.DateTime >= DateTime.Now;
+        private bool FindOnceDeadlines(DeadLine deadLine) =>
+            (deadLine.NotificationFrequency == "Once a day" && CheckDate(deadLine));
+
+        private bool FindTwiceDeadlines(DeadLine deadLine) =>
+            (deadLine.NotificationFrequency == "Once a day" && CheckDate(deadLine));
+
+        private bool FindHours5Deadlines(DeadLine deadLine) =>
+            (deadLine.NotificationFrequency == "Once a day" && CheckDate(deadLine));
 
         private bool CheckTimeToNotificate(int hours) =>
             (DateTime.Now.Hour == hours && DateTime.Now.Second == 0 &&
