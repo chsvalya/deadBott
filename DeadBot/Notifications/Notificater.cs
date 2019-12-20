@@ -22,13 +22,13 @@ namespace DeadBot.Notifications
             FillIn();
         }
 
-        public void FillIn()
+        private void FillIn()
         {
             using (var contxt = new ApplicationContext())
             {
-                once = contxt.DeadLines.Where(x => x.NotificationFrequency == "Once a day" && x.StartDate <= DateTime.Now && x.DateTime >= DateTime.Now).ToList();
-                twice = contxt.DeadLines.Where(x => x.NotificationFrequency == "Twice a day" && x.StartDate <= DateTime.Now && x.DateTime >= DateTime.Now).ToList();
-                hours_5 = contxt.DeadLines.Where(x => x.NotificationFrequency == "Every 5 hours" && x.StartDate <= DateTime.Now && x.DateTime >= DateTime.Now).ToList();
+                once = contxt.DeadLines.Where(d =>  FindDeadlines(d, "Once a day")).ToList();
+                twice = contxt.DeadLines.Where(d => FindDeadlines(d, "Twice a day")).ToList();
+                hours_5 = contxt.DeadLines.Where(d => FindDeadlines(d, "Every 5 hours")).ToList();
             }
 
             senders = new List<Action>
@@ -37,6 +37,25 @@ namespace DeadBot.Notifications
                 TwiceSender,
                 Hours
             };
+        }
+
+        private bool FindDeadlines(DeadLine deadLine, string frequency) =>
+            (deadLine.NotificationFrequency == frequency && deadLine.StartDate <= DateTime.Now
+                                                         && deadLine.DateTime >= DateTime.Now);
+
+        private bool CheckTimeToNotificate(int hours) =>
+            (DateTime.Now.Hour == hours && DateTime.Now.Second == 0 &&
+             DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0);
+
+        private void SendNotifications(int start)
+        {
+            if (counter == 0)
+            {
+                for (int i = start; i < senders.Count; i++)
+                    senders[i].Invoke();
+            }
+            else
+                counter = 0;
         }
 
         private void RemindReceivers(IEnumerable<DeadLine> collection)
@@ -52,6 +71,7 @@ namespace DeadBot.Notifications
             foreach (var deadline in collection)
                 AnswerManager.ShowPicture(deadline.ChatId);
         }
+
         private void OnceSender()
         {
             RemindReceivers(once);
@@ -64,37 +84,20 @@ namespace DeadBot.Notifications
         {
             RemindReceivers(hours_5);
         }
+
         public void Sending()
         {
-            if (DateTime.Now.Hour == 17 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
+            if (CheckTimeToNotificate(12))
             {
-                if (counter == 0)
-                {
-                    for (int i = 1; i < senders.Count; i++)
-                        senders[i].Invoke();
-                }
-                else
-                    counter = 0;
+                SendNotifications(0);
             }
-            else if (DateTime.Now.Hour == 22 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
+            else if (CheckTimeToNotificate(17))
             {
-                if (counter == 0)
-                {
-                    for (int i = 2; i < senders.Count; i++)
-                        senders[i].Invoke();
-                }
-                else
-                    counter = 0;
+                SendNotifications(1);
             }
-            else if(DateTime.Now.Hour == 12 && DateTime.Now.Second == 0 && DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0)
+            else if (CheckTimeToNotificate(22))
             {
-                if (counter == 0)
-                {
-                    for (int i = 0; i < senders.Count; i++)
-                        senders[i].Invoke();
-                }
-                else
-                    counter = 0;
+                SendNotifications(2);
             }
         }
     }
