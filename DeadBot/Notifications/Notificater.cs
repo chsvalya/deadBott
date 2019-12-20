@@ -51,14 +51,14 @@ namespace DeadBot.Notifications
             (deadLine.NotificationFrequency == "Once a day" && CheckDate(deadLine));
 
         private bool FindTwiceDeadlines(DeadLine deadLine) =>
-            (deadLine.NotificationFrequency == "Once a day" && CheckDate(deadLine));
+            (deadLine.NotificationFrequency == "Twice a day" && CheckDate(deadLine));
 
         private bool FindHours5Deadlines(DeadLine deadLine) =>
-            (deadLine.NotificationFrequency == "Once a day" && CheckDate(deadLine));
+            (deadLine.NotificationFrequency == "Every 5 hours" && CheckDate(deadLine));
 
         private bool CheckTimeToNotificate(int hours) =>
             (DateTime.Now.Hour == hours && DateTime.Now.Second == 0 &&
-             DateTime.Now.Minute == 0 && DateTime.Now.Millisecond == 0);
+             DateTime.Now.Minute == 15 && DateTime.Now.Millisecond == 0);
 
         private void SendNotifications(int start)
         {
@@ -81,7 +81,7 @@ namespace DeadBot.Notifications
                                         $"{(deadline.DateTime - DateTime.Now).Value.Minutes} minutes and {(deadline.DateTime - DateTime.Now).Value.Seconds} seconds, so do this task: " +
                                         $"{deadline.Name}, dear");
             }
-            foreach (var deadline in collection)
+            foreach (var deadline in collection.GroupBy(x => x.ChatId).Select(x => x.First()).ToList())
                 AnswerManager.ShowPicture(deadline.ChatId);
         }
 
@@ -108,7 +108,7 @@ namespace DeadBot.Notifications
             {
                 SendNotifications(1);
             }
-            else if (CheckTimeToNotificate(22))
+            else if (CheckTimeToNotificate(23))
             {
                 SendNotifications(2);
             }
