@@ -1,21 +1,17 @@
 ﻿using DeadBot.ManageMMSQL;
 using DeadBot.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DeadBot.UsefulMethods
+namespace DeadBot.ManagersAndFactory
 {
     static class ContextManager
     {
-        public static async void GetUser(List<DeadLine> userDeadlines, long chatId, 
-                                         Telegram.Bot.Types.User tgUser, int userId)
+        static readonly Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = Factory.Instance.GetUsersAndUnfinishedDeadlines;
+        public static async void GetUser(Telegram.Bot.Types.User tgUser, int userId)
         {
             using (var context = new ApplicationContext())
             {
-                userDeadlines = context.DeadLines.Where(d => d.ChatId == chatId).ToList();
                 var dbuser = context.Users
                     .FirstOrDefault(value => value.TelegramId == tgUser.Id);
 
@@ -48,11 +44,11 @@ namespace DeadBot.UsefulMethods
             }
         }
 
-        public static async void AddToBd(Dictionary<long, DeadLine> unfinishedDeadlines, long chatId)
+        public static async void AddToBd(long chatId)
         {
             using (var context = new ApplicationContext())
             {
-                context.DeadLines.Add(unfinishedDeadlines[chatId]);
+                context.DeadLines.Add(UsersAndUnfinishedDeadlines[chatId]);
                 await context.SaveChangesAsync();
             }
         }

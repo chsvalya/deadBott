@@ -1,27 +1,24 @@
 ﻿using DeadBot.ManageMMSQL;
 using DeadBot.Models;
-using DeadBot.UsefulMethods;
+using DeadBot.ManagersAndFactory;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
-using System.Threading.Tasks;
 using Telegram.Bot;
 
-namespace DeadBot.Commands
+namespace DeadBot.Notifications
 {
     class Notificater
     {
         int counter = 0;
-        static ITelegramBotClient client;
+        static ITelegramBotClient client = Factory.Instance.GetClient;
         static List<Action> senders;
         static List<DeadLine> once;
         static List<DeadLine> twice;
         static List<DeadLine> hours_5;
 
-        public Notificater(ITelegramBotClient c)
+        public Notificater()
         {
-            client = c;
             FillIn();
         }
 
@@ -52,7 +49,7 @@ namespace DeadBot.Commands
                                         $"{deadline.Name}, dear");
             }
             foreach (var deadline in collection)
-                AnswerManager.ShowPicture(client, deadline.ChatId);
+                AnswerManager.ShowPicture(deadline.ChatId);
         }
         private void OnceSender()
         {

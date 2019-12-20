@@ -43,8 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\Command.cs" />
-    <Compile Include="Commands\Notificater.cs" />
+    <Compile Include="Notifications\Notificater.cs" />
     <Compile Include="Keyboards\Keyboards.cs" />
     <Compile Include="ManageMMSQL\ApplicationContext.cs" />
     <Compile Include="ManageMMSQL\Queries.cs" />
@@ -81,14 +80,13 @@
       <DependentUpon>201912181117561_Notificate.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Models\Bot.cs" />
-    <Compile Include="Models\BotSettings.cs" />
     <Compile Include="Models\DeadLine.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UsefulMethods\AnswerManager.cs" />
-    <Compile Include="UsefulMethods\ContextManager.cs" />
+    <Compile Include="ManagersAndFactory\AnswerManager.cs" />
+    <Compile Include="ManagersAndFactory\ContextManager.cs" />
+    <Compile Include="ManagersAndFactory\Factory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

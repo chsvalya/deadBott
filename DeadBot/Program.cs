@@ -4,33 +4,26 @@ using System.Collections.Generic;
 using System.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Args;
-using static DeadBot.UsefulMethods.AnswerManager;
-using static DeadBot.UsefulMethods.ContextManager;
+using static DeadBot.ManagersAndFactory.AnswerManager;
+using static DeadBot.ManagersAndFactory.ContextManager;
 using System.Threading.Tasks;
-using MihaZupan;
-using DeadBot.Commands;
+using DeadBot.Notifications;
 using DeadBot.ManageMMSQL;
-using System.Data.Entity;
+using DeadBot.ManagersAndFactory;
 
 namespace DeadBot
 {
     class Program
     {
-        static ITelegramBotClient client;
-        static readonly Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = new Dictionary<long, DeadLine>();
-        static readonly List<long> WhoWantedToDelete = new List<long>();
+        static readonly ITelegramBotClient client = Factory.Instance.GetClient;
+        static readonly Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = Factory.Instance.GetUsersAndUnfinishedDeadlines;
+        static readonly List<long> WhoWantedToDelete = Factory.Instance.GetWhoWantedToDelete;
+        static readonly Notificater notificater = Factory.Instance.GetNotificater;
 
         static void Main()
         {
-            var proxy = new HttpToSocks5Proxy("46.101.123.77", 7890, "proxyuser", "2SASZwRfJbd24udA");
-
-            client = new TelegramBotClient("892374552:AAFcqMqxWkCsHZNQYj2G_mhgZ6ERDek4m6Q", proxy)
-                        { Timeout = TimeSpan.FromSeconds(5) };
-
             var me = client.GetMeAsync().Result;
             Console.WriteLine($"id: {me.Id}, name: {me.FirstName}");
-            
-            var notificater = new Notificater(client);
 
             Task.Run(() =>
             {
@@ -63,39 +56,39 @@ namespace DeadBot
             {
                 userDeadlines = context.DeadLines.Where(x => x.ChatId == chatId).ToList();
             }
-                GetUser(userDeadlines, chatId, tgUser, userId);
+            GetUser(tgUser, userId);
 
-            if (IsOldUserWithAllDeadlinesFinished(UsersAndUnfinishedDeadlines, WhoWantedToDelete, chatId))
+            if (IsOldUserWithAllDeadlinesFinished(chatId))
             {
                 if (text == "Add")
-                    AddReact(client, UsersAndUnfinishedDeadlines, chatId);
+                    AddReact(chatId);
 
                 else if (text == "Show all")
-                    ShowAllReact(client, userDeadlines, chatId);
+                    ShowAllReact(userDeadlines, chatId);
 
                 else if (text == "Delete" && userDeadlines.Count() != 0)
-                    DeleteReact(client, WhoWantedToDelete, userDeadlines, chatId);
+                    DeleteReact(userDeadlines, chatId);
 
                 else
-                    ClassicGreetings(client, chatId);
+                    ClassicGreetings(chatId);
             }
 
             else
             {
                 if (WhoWantedToDelete.Contains(chatId))
                 {
-                    int userResponce = SelectedDeadline(client, chatId, text);
+                    int userResponce = SelectedDeadline(chatId, text);
 
                     try
                     {
                         DeadLine deleted = userDeadlines[userResponce - 1];
-                        DeleteDeadline(client, chatId, deleted, WhoWantedToDelete);
+                        DeleteDeadline(chatId, deleted);
                         DeleteFromBd(deleted);
                         return;
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        WrongInputReact(client, chatId);
+                        WrongInputReact(chatId);
                         return;
                     }
                 }
@@ -103,21 +96,21 @@ namespace DeadBot
                 UsersAndUnfinishedDeadlines.TryGetValue(chatId, out DeadLine unfinished);
 
                 if (unfinished.Name == null)
-                    ConfigureName(client, unfinished, chatId, text);
+                    ConfigureName(unfinished, chatId, text);
 
                 else if (unfinished.NotificationFrequency is null)
-                    ConfigureFrequency(client, unfinished, chatId, text);
+                    ConfigureFrequency(unfinished, chatId, text);
 
                 else if (unfinished.DateTime is null)
-                    ConfigureDateTime(client, unfinished, chatId, text);
+                    ConfigureDateTime(unfinished, chatId, text);
 
                 else if (unfinished.StartDate is null)
-                    ConfigureStartDate(client, unfinished, chatId, text);
+                    ConfigureStartDate(unfinished, chatId, text);
 
                 if (IsFullDeadline(unfinished))
                 {
-                    AddDeadline(client, UsersAndUnfinishedDeadlines, chatId);
-                    AddToBd(UsersAndUnfinishedDeadlines, chatId);
+                    AddDeadline(chatId);
+                    AddToBd(chatId);
                 }
             }
         }

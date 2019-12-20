@@ -1,18 +1,18 @@
-﻿using DeadBot.ManageMMSQL;
-using DeadBot.Models;
+﻿using DeadBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using static DeadBot.Keyboards.Keyboards;
 
-namespace DeadBot.UsefulMethods
+namespace DeadBot.ManagersAndFactory
 {
     static class AnswerManager
     {
+        static readonly ITelegramBotClient client = Factory.Instance.GetClient;
+        static readonly Dictionary<long, DeadLine> UsersAndUnfinishedDeadlines = Factory.Instance.GetUsersAndUnfinishedDeadlines;
+        static readonly List<long> WhoWantedToDelete = Factory.Instance.GetWhoWantedToDelete;
         public static Random rnd = new Random();
         public static List<String> pictures = new List<string>
         {
@@ -24,9 +24,9 @@ namespace DeadBot.UsefulMethods
 
         };
         
-        public static bool IsOldUserWithAllDeadlinesFinished(Dictionary<long, DeadLine> unfinishedDeadlines,
-            List<long> wantedDelete, long chatId) => unfinishedDeadlines.Keys.Count(x => x == chatId) == 0 
-            && !wantedDelete.Contains(chatId);
+        public static bool IsOldUserWithAllDeadlinesFinished(long chatId) => 
+            UsersAndUnfinishedDeadlines.Keys.Count(x => x == chatId) == 0 
+            && !WhoWantedToDelete.Contains(chatId);
 
         public static bool IsFullDeadline(DeadLine unfinished) =>
             unfinished.Name != null && unfinished.NotificationFrequency != null &&
@@ -44,70 +44,66 @@ namespace DeadBot.UsefulMethods
             return answer;
         }
 
-        public static async void AddReact(ITelegramBotClient client, 
-                                          Dictionary<long, DeadLine> unfinishedDeadlines, long chatId)
+        public static async void AddReact(long chatId)
         {
-            if (!unfinishedDeadlines.ContainsKey(chatId))
+            if (!UsersAndUnfinishedDeadlines.ContainsKey(chatId))
             {
-                unfinishedDeadlines.Add(chatId, new DeadLine { ChatId = chatId });
+                UsersAndUnfinishedDeadlines.Add(chatId, new DeadLine { ChatId = chatId });
             }
             await client.SendTextMessageAsync(chatId, "Enter name of deadline.").ConfigureAwait(false);
         }
 
-        public static async void ShowAllReact(ITelegramBotClient client, List<DeadLine> deadlines, long chatId)
+        public static async void ShowAllReact(List<DeadLine> deadlines, long chatId)
         { 
             await client.SendTextMessageAsync(chatId, $"These are all your deadlines:\n{WriteDeadlines(deadlines)}" +
                         $"What's next?", ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
-            ShowPicture(client, chatId);
+            ShowPicture(chatId);
         }
 
-        public static async void DeleteReact(ITelegramBotClient client, List<long> wantedDelete, 
-                                             List<DeadLine> deadlines, long chatId)
+        public static async void DeleteReact(List<DeadLine> deadlines, long chatId)
         {
-            if (!wantedDelete.Contains(chatId))
+            if (!WhoWantedToDelete.Contains(chatId))
             {
-                wantedDelete.Add(chatId);
+                WhoWantedToDelete.Add(chatId);
             }
             await client.SendTextMessageAsync(chatId, $"These are all your deadlines:\n" +
                         $"{WriteDeadlines(deadlines)} Choose deadline number to delete").ConfigureAwait(false);
         }
-        public static async void ShowPicture(ITelegramBotClient client,long chatId)
+        public static async void ShowPicture(long chatId)
         {
             await client.SendPhotoAsync(chatId, pictures[rnd.Next(0, pictures.Count)]);
         }
-        public static async void ClassicGreetings(ITelegramBotClient client, long chatId)
+        public static async void ClassicGreetings(long chatId)
         {
             await client.SendTextMessageAsync(chatId, "What are we doing with deadlines?",
                                       ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
         }
 
-        public static async void WrongInputReact(ITelegramBotClient client, long chatId)
+        public static async void WrongInputReact(long chatId)
         {
             await client.SendTextMessageAsync(chatId, "There was a mistake in your input!").ConfigureAwait(false);
         }
 
-        public static int SelectedDeadline(ITelegramBotClient client, long chatId, string text)
+        public static int SelectedDeadline(long chatId, string text)
         {
             var userResponce = 0;
             if (userResponce == 0 && !int.TryParse(text, out userResponce))
             {
-                WrongInputReact(client, chatId);
+                WrongInputReact(chatId);
                 return 0;
             }
             return userResponce;
         }
 
-        public static async void DeleteDeadline(ITelegramBotClient client, long chatId, 
-                                                DeadLine deleted, List<long> wantedDelete)
+        public static async void DeleteDeadline(long chatId, DeadLine deleted)
         {
             
             await client.SendTextMessageAsync(chatId, $"Deadline \'{deleted.Name}\' deleted!\nWhat's next?",
                                 ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
-            wantedDelete.Remove(chatId);
+            WhoWantedToDelete.Remove(chatId);
         }
 
-        public static async void ConfigureName(ITelegramBotClient client, DeadLine unfinished, 
-                                               long chatId, string text)
+        public static async void ConfigureName(DeadLine unfinished, long chatId, string text)
         {
             if (!string.IsNullOrEmpty(text))
                 unfinished.Name = text;
@@ -116,8 +112,7 @@ namespace DeadBot.UsefulMethods
                          ParseMode.Default, false, false, 0, frequencyKeyboard).ConfigureAwait(false);
         }
 
-        public static async void ConfigureFrequency(ITelegramBotClient client, DeadLine unfinished, 
-                                                    long chatId, string text)
+        public static async void ConfigureFrequency(DeadLine unfinished, long chatId, string text)
         {
             if (!string.IsNullOrEmpty(text) && (text == "Twice a day" || text == "Once a day" || text == "Every 5 hours"))
             {
@@ -127,11 +122,10 @@ namespace DeadBot.UsefulMethods
                                                                   " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
             }
             else
-                WrongInputReact(client, chatId);
+                WrongInputReact(chatId);
         }
 
-        public static async void ConfigureDateTime(ITelegramBotClient client, DeadLine unfinished,
-                                                   long chatId, string text)
+        public static async void ConfigureDateTime(DeadLine unfinished, long chatId, string text)
         {
             if (DateTime.TryParse(text, out DateTime Date) && Date > DateTime.Now)
             {
@@ -141,10 +135,10 @@ namespace DeadBot.UsefulMethods
                                                                   " YYYY-MM-DD HH:MM:SS").ConfigureAwait(false);
             }
             else
-                WrongInputReact(client, chatId);
+                WrongInputReact(chatId);
         }
 
-        public static void ConfigureStartDate(ITelegramBotClient client, DeadLine unfinished, long chatId, string text)
+        public static void ConfigureStartDate(DeadLine unfinished, long chatId, string text)
         {
             if (DateTime.TryParse(text, out DateTime date))
             {
@@ -152,16 +146,15 @@ namespace DeadBot.UsefulMethods
                 Console.WriteLine($"added start: {text}");
             }
             else
-                WrongInputReact(client, chatId);
+                WrongInputReact(chatId);
         }
 
-        public static async void AddDeadline(ITelegramBotClient client, 
-                                             Dictionary<long, DeadLine> unfinishedDeadlines, long chatId)
+        public static async void AddDeadline(long chatId)
         {
             await client.SendTextMessageAsync(chatId, "Deadline is added, thanks and good luck!\nWhat's next?",
                         ParseMode.Default, false, false, 0, mainKeyboard).ConfigureAwait(false);
 
-            unfinishedDeadlines.Remove(chatId);
+            UsersAndUnfinishedDeadlines.Remove(chatId);
         }
     }
 }
